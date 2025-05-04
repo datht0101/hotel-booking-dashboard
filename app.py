@@ -57,16 +57,21 @@ with left1:
 # ===== BIỂU ĐỒ: Bubble calendar =====
 with right1:
     st.subheader("📅 Theo dõi đặt phòng")
-    bubble_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
+    heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
+    heatmap_pivot = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
+
+    # Sắp xếp đúng thứ tự thứ trong tuần
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    bubble_data['day_of_week'] = pd.Categorical(bubble_data['day_of_week'], categories=weekday_order, ordered=True)
-    bubble_data = bubble_data.sort_values(['arrival_date_day_of_month', 'day_of_week'])
-    fig2 = px.scatter(bubble_data, x='day_of_week', y='arrival_date_day_of_month', size='count', color='count',
-                      color_continuous_scale='Blues',
-                      labels={'day_of_week': 'Thứ', 'arrival_date_day_of_month': 'Ngày'}, height=350)
-    fig2.update_traces(marker=dict(sizemode='diameter', line=dict(width=1, color='DarkSlateGrey')))
-    fig2.update_layout(yaxis=dict(dtick=1))
-    st.plotly_chart(fig2, use_container_width=True)
+    heatmap_pivot = heatmap_pivot[weekday_order]
+
+    fig2, ax = plt.subplots(figsize=(10, 6))
+    c = ax.imshow(heatmap_pivot, cmap='Blues', aspect='auto')
+    ax.set_xticks(range(len(heatmap_pivot.columns)))
+    ax.set_xticklabels(heatmap_pivot.columns)
+    ax.set_yticks(range(len(heatmap_pivot.index)))
+    ax.set_yticklabels(heatmap_pivot.index)
+    plt.colorbar(c, ax=ax, label='Bookings')
+    st.pyplot(fig2)
 
 # ===== BIỂU ĐỒ: Waiting list =====
 left2, right2 = st.columns(2)
@@ -79,7 +84,7 @@ with left2:
 
 # ===== BIỂU ĐỒ: Lead Time =====
 with right2:
-    st.subheader("🚗 Thời gian chờ đến (Lead Time)")
+    st.subheader("🚗 Thời gian chờ đến")
     lead_df = filtered_df.groupby('customer_type')['lead_time'].mean().reset_index()
     fig4 = px.bar(lead_df, x='lead_time', y='customer_type', orientation='h', color='customer_type',
                   labels={'lead_time': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
