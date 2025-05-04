@@ -56,22 +56,25 @@ with left1:
 
 # ===== BIỂU ĐỒ: Bubble calendar =====
 with right1:
-    st.subheader("📅 Theo dõi đặt phòng")
+    st.subheader("📅 Theo dõi đặt phòng (Heatmap)")
     heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
     heatmap_pivot = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
 
-    # Sắp xếp đúng thứ tự thứ trong tuần
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     heatmap_pivot = heatmap_pivot[weekday_order]
 
-    fig2, ax = plt.subplots(figsize=(10, 6))
-    c = ax.imshow(heatmap_pivot, cmap='Blues', aspect='auto')
-    ax.set_xticks(range(len(heatmap_pivot.columns)))
-    ax.set_xticklabels(heatmap_pivot.columns)
-    ax.set_yticks(range(len(heatmap_pivot.index)))
-    ax.set_yticklabels(heatmap_pivot.index)
-    plt.colorbar(c, ax=ax, label='Bookings')
-    st.pyplot(fig2)
+    fig, ax = plt.subplots(figsize=(9, 6))
+    sns.heatmap(
+        heatmap_pivot,
+        cmap="Blues",
+        linewidths=0.2,
+        linecolor="white",
+        square=True,
+        cbar_kws={"label": "Bookings"}
+    )
+    ax.set_xlabel("Thứ", fontsize=11)
+    ax.set_ylabel("Ngày", fontsize=11)
+    st.pyplot(fig)
 
 # ===== BIỂU ĐỒ: Waiting list =====
 left2, right2 = st.columns(2)
