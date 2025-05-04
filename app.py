@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 st.set_page_config(layout="wide")
 st.title("📊 Hotel Booking Dashboard")
@@ -56,7 +57,7 @@ with left1:
 
 # ===== BIỂU ĐỒ: Bubble calendar =====
 with right1:
-    st.subheader("📅 Theo dõi đặt phòng (Heatmap)")
+    st.subheader("📅 Theo dõi đặt phòng")
     heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
     heatmap_pivot = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
 
