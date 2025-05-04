@@ -7,10 +7,6 @@
 # In[ ]:
 
 
-# ✅ B1: Cài thư viện cần thiết
-get_ipython().system('pip install streamlit pyngrok pandas plotly matplotlib --quiet')
-
-
 # In[ ]:
 
 
