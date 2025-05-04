@@ -45,7 +45,7 @@ if cancel_filter != "All":
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Số lượng đặt trước", f"{len(filtered_df):,}")
 c2.metric("Số lượng huỷ", f"{filtered_df['is_canceled'].sum():,}")
-c3.metric("Số lượng khách", f"{int(filtered_df['total_guests'].sum()):,}")
+c3.metric("Số lượng khách", f"{int(filtered_df[filtered_df['is_canceled'] == 0]['total_guests'].sum()):,}")
 c4.metric("Doanh thu", f"{int(filtered_df['revenue'].sum()):,}")
 st.markdown("---")
 
