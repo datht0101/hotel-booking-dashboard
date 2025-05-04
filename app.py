@@ -1,17 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # 📊 Hotel Booking Dashboard (Full Streamlit + Ngrok in Colab)
-# **Chạy từng ô bên dưới theo thứ tự để xem dashboard giống Tableau.**
-
-# In[ ]:
-
-
-# In[ ]:
-
-
-# ✅ B2: Tạo app.py chứa toàn bộ mã dashboard
-get_ipython().run_line_magic('%writefile', 'app.py')
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -75,7 +61,9 @@ with right1:
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     bubble_data['day_of_week'] = pd.Categorical(bubble_data['day_of_week'], categories=weekday_order, ordered=True)
     bubble_data = bubble_data.sort_values(['arrival_date_day_of_month', 'day_of_week'])
-    fig2 = px.scatter(bubble_data, x='day_of_week', y='arrival_date_day_of_month', size='count', color='count', color_continuous_scale='Blues', labels={'day_of_week': 'Thứ', 'arrival_date_day_of_month': 'Ngày'}, height=350)
+    fig2 = px.scatter(bubble_data, x='day_of_week', y='arrival_date_day_of_month', size='count', color='count',
+                      color_continuous_scale='Blues',
+                      labels={'day_of_week': 'Thứ', 'arrival_date_day_of_month': 'Ngày'}, height=350)
     fig2.update_traces(marker=dict(sizemode='diameter', line=dict(width=1, color='DarkSlateGrey')))
     fig2.update_layout(yaxis=dict(dtick=1))
     st.plotly_chart(fig2, use_container_width=True)
@@ -85,33 +73,14 @@ left2, right2 = st.columns(2)
 with left2:
     st.subheader("⏳ Thời gian chờ xác nhận")
     wait_df = filtered_df.groupby('customer_type')['days_in_waiting_list'].mean().reset_index()
-    fig3 = px.bar(wait_df, x='days_in_waiting_list', y='customer_type', orientation='h', color='customer_type', labels={'days_in_waiting_list': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
+    fig3 = px.bar(wait_df, x='days_in_waiting_list', y='customer_type', orientation='h', color='customer_type',
+                  labels={'days_in_waiting_list': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
     st.plotly_chart(fig3, use_container_width=True)
 
 # ===== BIỂU ĐỒ: Lead Time =====
 with right2:
     st.subheader("🚗 Thời gian chờ đến (Lead Time)")
     lead_df = filtered_df.groupby('customer_type')['lead_time'].mean().reset_index()
-    fig4 = px.bar(lead_df, x='lead_time', y='customer_type', orientation='h', color='customer_type', labels={'lead_time': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
+    fig4 = px.bar(lead_df, x='lead_time', y='customer_type', orientation='h', color='customer_type',
+                  labels={'lead_time': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
     st.plotly_chart(fig4, use_container_width=True)
-
-
-# In[ ]:
-
-
-# ✅ B3: Upload file dữ liệu hotel_bookings 2.csv
-from google.colab import files
-uploaded = files.upload()
-
-
-# In[ ]:
-
-
-# ✅ B4: Mở dashboard bằng ngrok
-from pyngrok import conf, ngrok
-conf.get_default().auth_token = "2wdZTyL5QDHE5dGgSIRT6KiXCAp_7NqoRHHtaqFGEgP14QpNb"
-public_url = ngrok.connect(addr=8501, proto="http")
-import IPython
-IPython.display.display(IPython.display.Markdown(f'👉 [MỞ DASHBOARD TẠI ĐÂY 🔗]({public_url})'))
-get_ipython().system('streamlit run app.py &>/content/logs.txt &')
-
