@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 st.set_page_config(layout="wide")
 st.title("📊 Hotel Booking Dashboard")
@@ -12,9 +11,13 @@ df = pd.read_csv("hotel_bookings 2.csv")
 df['children'].fillna(0, inplace=True)
 df['total_guests'] = df['adults'] + df['children'] + df['babies']
 df['total_nights'] = df['stays_in_weekend_nights'] + df['stays_in_week_nights']
-df['revenue'] = df['adr'] * df['total_nights']
 df['arrival_date'] = pd.to_datetime(df['reservation_status_date'], dayfirst=True, errors='coerce')
 df['day_of_week'] = df['arrival_date'].dt.day_name()
+
+# Doanh thu chỉ tính cho đơn không huỷ
+df['revenue'] = df.apply(
+    lambda row: row['adr'] * row['total_nights'] if row['is_canceled'] == 0 else 0, axis=1
+)
 
 # ===== Bộ lọc ngang =====
 col1, col2, col3, col4 = st.columns(4)
@@ -50,30 +53,32 @@ st.markdown("---")
 left1, right1 = st.columns(2)
 with left1:
     st.subheader("📦 Đặt phòng vs Hủy")
-    booking_data = filtered_df['is_canceled'].value_counts().rename({0: 'Booking', 1: 'Canceled'}).reset_index()
+    booking_data = (
+        filtered_df['is_canceled']
+        .value_counts()
+        .rename({0: 'Booking', 1: 'Canceled'})
+        .reset_index()
+    )
     booking_data.columns = ['Status', 'Count']
-    fig1 = px.bar(booking_data, x='Status', y='Count', color='Status', labels={'Count': 'Số lượng'}, height=350)
+    fig1 = px.bar(booking_data, x='Status', y='Count', color='Status', height=350)
     st.plotly_chart(fig1, use_container_width=True)
 
-# ===== BIỂU ĐỒ: Heatmap =====
+# ===== BIỂU ĐỒ: Heatmap theo ngày - thứ =====
 with right1:
     st.subheader("📅 Theo dõi đặt phòng")
     heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
-    heatmap_pivot = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
-
-    # Sắp xếp đúng thứ tự thứ trong tuần
+    pivot_table = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    heatmap_pivot = heatmap_pivot[weekday_order]
+    pivot_table = pivot_table[weekday_order]
 
-    fig2, ax = plt.subplots(figsize=(10, 6))
-    c = ax.imshow(heatmap_pivot, cmap='Blues', aspect='auto')
-    ax.set_xticks(range(len(heatmap_pivot.columns)))
-    ax.set_xticklabels(heatmap_pivot.columns)
-    ax.set_yticks(range(len(heatmap_pivot.index)))
-    ax.set_yticklabels(heatmap_pivot.index)
+    fig2, ax = plt.subplots(figsize=(9, 6))
+    c = ax.imshow(pivot_table, cmap='Blues', aspect='auto')
+    ax.set_xticks(range(len(pivot_table.columns)))
+    ax.set_xticklabels(pivot_table.columns)
+    ax.set_yticks(range(len(pivot_table.index)))
+    ax.set_yticklabels(pivot_table.index)
     plt.colorbar(c, ax=ax, label='Bookings')
     st.pyplot(fig2)
-
 
 # ===== BIỂU ĐỒ: Waiting list =====
 left2, right2 = st.columns(2)
