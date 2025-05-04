@@ -55,27 +55,25 @@ with left1:
     fig1 = px.bar(booking_data, x='Status', y='Count', color='Status', labels={'Count': 'Số lượng'}, height=350)
     st.plotly_chart(fig1, use_container_width=True)
 
-# ===== BIỂU ĐỒ: Bubble calendar =====
+# ===== BIỂU ĐỒ: Heatmap =====
 with right1:
     st.subheader("📅 Theo dõi đặt phòng")
     heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
     heatmap_pivot = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
 
+    # Sắp xếp đúng thứ tự thứ trong tuần
     weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     heatmap_pivot = heatmap_pivot[weekday_order]
 
-    fig, ax = plt.subplots(figsize=(9, 6))
-    sns.heatmap(
-        heatmap_pivot,
-        cmap="Blues",
-        linewidths=0.2,
-        linecolor="white",
-        square=True,
-        cbar_kws={"label": "Bookings"}
-    )
-    ax.set_xlabel("Thứ", fontsize=11)
-    ax.set_ylabel("Ngày", fontsize=11)
-    st.pyplot(fig)
+    fig2, ax = plt.subplots(figsize=(10, 6))
+    c = ax.imshow(heatmap_pivot, cmap='Blues', aspect='auto')
+    ax.set_xticks(range(len(heatmap_pivot.columns)))
+    ax.set_xticklabels(heatmap_pivot.columns)
+    ax.set_yticks(range(len(heatmap_pivot.index)))
+    ax.set_yticklabels(heatmap_pivot.index)
+    plt.colorbar(c, ax=ax, label='Bookings')
+    st.pyplot(fig2)
+
 
 # ===== BIỂU ĐỒ: Waiting list =====
 left2, right2 = st.columns(2)
