@@ -6,13 +6,19 @@ import matplotlib.pyplot as plt
 st.set_page_config(layout="wide")
 st.title("📊 Hotel Booking Dashboard")
 
-# ===== Load & xử lý dữ liệu =====
+# ===== Load dữ liệu =====
 df = pd.read_csv("process_hotel.csv")
+
+# ===== Tính toán thêm cột =====
 df['children'].fillna(0, inplace=True)
-df['total_guests'] = df['adults'] + df['children'] + df['babies']
+df['total_nights'] = df['stays_in_weekend_nights'] + df['stays_in_week_nights']
 df['arrival_date'] = pd.to_datetime(df['reservation_status_date'], dayfirst=True, errors='coerce')
 df['day_of_week'] = df['arrival_date'].dt.day_name()
-df['revenue'] = df.apply(lambda row: row['adr'] * row['total_nights'] if row['is_canceled'] == 0 else 0, axis=1)
+
+# Doanh thu chỉ tính cho booking không bị huỷ
+df['revenue'] = df.apply(
+    lambda row: row['adr'] * row['total_nights'] if row['is_canceled'] == 0 else 0, axis=1
+)
 
 # ===== Bộ lọc =====
 col1, col2, col3, col4 = st.columns(4)
@@ -44,76 +50,48 @@ c3.metric("Số lượng khách", f"{int(filtered_df[filtered_df['is_canceled'] 
 c4.metric("Doanh thu", f"{int(filtered_df['revenue'].sum()):,}")
 st.markdown("---")
 
-# ===== BIỂU ĐỒ: Booking vs Canceled =====
-left1, right1 = st.columns(2)
-with left1:
-    st.subheader("📦 Đặt phòng vs Hủy")
-    booking_data = (
-        filtered_df['is_canceled']
-        .value_counts()
-        .rename({0: 'Booking', 1: 'Canceled'})
-        .reset_index()
-    )
-    booking_data.columns = ['Status', 'Count']
-    fig1 = px.bar(
-        booking_data,
-        x='Status',
-        y='Count',
-        color='Status',
-        color_discrete_map={'Booking': 'steelblue', 'Canceled': 'orange'},
-        height=350
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+# ===== Biểu đồ: Doanh thu theo loại khách sạn =====
+st.subheader("🏨 Tổng doanh thu theo loại hotel")
+hotel_rev = filtered_df[filtered_df['is_canceled'] == 0].groupby('hotel')['revenue'].sum().reset_index()
+colors = ['#1f77b4' if hotel != 'Resort Hotel' else '#ff7f0e' for hotel in hotel_rev['hotel']]
+fig1 = px.bar(hotel_rev, x='hotel', y='revenue', color='hotel', color_discrete_sequence=colors,
+              labels={'revenue': 'Doanh thu', 'hotel': 'Loại hotel'}, height=400)
+st.plotly_chart(fig1, use_container_width=True)
 
-# ===== BIỂU ĐỒ: Heatmap theo ngày - thứ =====
-with right1:
-    st.subheader("📅 Theo dõi đặt phòng")
-    heatmap_data = filtered_df.groupby(['arrival_date_day_of_month', 'day_of_week']).size().reset_index(name='count')
-    pivot_table = heatmap_data.pivot(index='arrival_date_day_of_month', columns='day_of_week', values='count').fillna(0)
-    weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    pivot_table = pivot_table[weekday_order]
-
-    fig2, ax = plt.subplots(figsize=(9, 6))
-    c = ax.imshow(pivot_table, cmap='Blues', aspect='auto')
-    ax.set_xticks(range(len(pivot_table.columns)))
-    ax.set_xticklabels(pivot_table.columns)
-    ax.set_yticks(range(len(pivot_table.index)))
-    ax.set_yticklabels(pivot_table.index)
-    plt.colorbar(c, ax=ax, label='Bookings')
-    st.pyplot(fig2)
-
-# ===== BIỂU ĐỒ: Waiting list & Lead time =====
-left2, right2 = st.columns(2)
-with left2:
-    st.subheader("⏳ Thời gian chờ xác nhận")
-    wait_df = filtered_df.groupby('customer_type')['days_in_waiting_list'].mean().reset_index()
-    fig3 = px.bar(wait_df, x='days_in_waiting_list', y='customer_type', orientation='h', color='customer_type',
-                  labels={'days_in_waiting_list': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
-    st.plotly_chart(fig3, use_container_width=True)
-
-with right2:
-    st.subheader("🚗 Thời gian chờ đến")
-    lead_df = filtered_df.groupby('customer_type')['lead_time'].mean().reset_index()
-    fig4 = px.bar(lead_df, x='lead_time', y='customer_type', orientation='h', color='customer_type',
-                  labels={'lead_time': 'Ngày', 'customer_type': 'Loại khách'}, height=350)
-    st.plotly_chart(fig4, use_container_width=True)
-
-# ===== BIỂU ĐỒ: Top quốc gia =====
+# ===== Biểu đồ: Top quốc gia đặt phòng =====
 st.subheader("🌍 Top quốc gia đặt phòng nhiều nhất")
 top_countries = (
-    filtered_df['country']
+    filtered_df[filtered_df['is_canceled'] == 0]['country']
     .value_counts()
     .head(10)
     .reset_index()
     .rename(columns={'index': 'country', 'country': 'bookings'})
 )
-fig5 = px.bar(
-    top_countries,
-    x='country',
-    y='bookings',
-    text='bookings',
-    height=500
+fig2 = px.bar(top_countries, x='bookings', y='country', orientation='h',
+              color='country', height=500, width=1000)
+st.plotly_chart(fig2, use_container_width=True)
+
+# ===== Biểu đồ: Tỷ lệ huỷ theo loại hotel =====
+st.subheader("📉 Tỷ lệ huỷ phòng theo loại hotel")
+cancel_rate = (
+    filtered_df.groupby('hotel')['is_canceled']
+    .mean().reset_index()
 )
-fig5.update_traces(marker_color='steelblue', marker_line_color='black', marker_line_width=1.2)
-fig5.update_layout(yaxis_title="Bookings", xaxis_title="Country")
-st.plotly_chart(fig5, use_container_width=True)
+cancel_rate['cancel_rate'] = cancel_rate['is_canceled'] * 100
+fig3 = px.bar(cancel_rate, x='hotel', y='cancel_rate',
+              color='hotel', color_discrete_sequence=colors,
+              labels={'cancel_rate': 'Tỷ lệ huỷ (%)'}, height=400)
+st.plotly_chart(fig3, use_container_width=True)
+
+# ===== Biểu đồ: Trạng thái đặt phòng =====
+st.subheader("📦 Phân bố trạng thái đặt phòng")
+status_data = (
+    filtered_df['reservation_status']
+    .value_counts(normalize=True)
+    .reset_index()
+    .rename(columns={'index': 'status', 'reservation_status': 'percentage'})
+)
+status_data['percentage'] *= 100
+fig4 = px.pie(status_data, values='percentage', names='status',
+              title='Trạng thái đặt phòng', hole=0.4)
+st.plotly_chart(fig4, use_container_width=True)
