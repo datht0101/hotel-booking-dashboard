@@ -11,6 +11,7 @@ df = pd.read_csv("process_hotel.csv")
 
 # ===== Tính toán thêm cột =====
 df['children'].fillna(0, inplace=True)
+df['total_guests'] = df['adults'] + df['children'] + df['babies']
 df['total_nights'] = df['stays_in_weekend_nights'] + df['stays_in_week_nights']
 df['arrival_date'] = pd.to_datetime(df['reservation_status_date'], dayfirst=True, errors='coerce')
 df['day_of_week'] = df['arrival_date'].dt.day_name()
