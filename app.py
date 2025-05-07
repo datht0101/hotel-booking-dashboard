@@ -79,14 +79,29 @@ st.plotly_chart(fig4, use_container_width=True)
 st.subheader("Top quốc gia đặt phòng nhiều nhất")
 top_countries = df["country"].value_counts().nlargest(8).reset_index()
 top_countries.columns = ["country", "bookings"]
+
 fig5 = px.bar(
     top_countries,
-    x="country",
-    y="bookings",
+    x="bookings",
+    y="country",
     text="bookings",
     orientation="h",
     height=500
 )
-fig5.update_layout(yaxis=dict(autorange="reversed"))
-fig5.update_traces(textposition='outside')
+
+fig5.update_traces(
+    marker_color='#3399ff',  # màu xanh đậm
+    marker_line_color='black',
+    marker_line_width=1.5,
+    texttemplate='%{text:,}',
+    textposition='outside'
+)
+
+fig5.update_layout(
+    xaxis_title='Số lượt đặt phòng',
+    yaxis_title='Quốc gia',
+    plot_bgcolor='white'
+)
+
 st.plotly_chart(fig5, use_container_width=True)
+
